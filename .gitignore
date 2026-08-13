@@ -1,0 +1,23 @@
+# 환경 변수 (절대 커밋 금지)
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel
+
+# 의존성 / 빌드 산출물
+node_modules/
+dist/
+build/
+
+# OS / 에디터
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# 로그
+*.log
+npm-debug.log*

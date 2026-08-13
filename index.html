@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTD Speech Bridge</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            min-height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 600px;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            color: #222;
+        }
+
+        .subtitle {
+            color: #777;
+            margin-bottom: 30px;
+        }
+
+        #connectButton {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #connectButton:hover {
+            background: #1d4ed8;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #777;
+        }
+
+        .speech-box {
+            margin-top: 35px;
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .label {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        #incorrect {
+            font-size: 22px;
+            color: #555;
+            margin-bottom: 25px;
+        }
+
+        #correct {
+            font-size: 26px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .waiting {
+            color: #aaa !important;
+        }
+
+        .indicator {
+            margin: 25px auto 10px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #eef2ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>FTD Speech Bridge</h1>
+
+    <div class="subtitle">
+        AI-powered speech correction
+    </div>
+
+    <button id="connectButton">
+        Connect Arduino
+    </button>
+
+    <div class="status" id="status">
+        Arduino not connected
+    </div>
+
+    <div class="indicator">
+        🎤
+    </div>
+
+    <div class="speech-box">
+
+        <div class="label">
+            Detected Speech
+        </div>
+
+        <div id="incorrect" class="waiting">
+            Waiting for speech...
+        </div>
+
+        <div class="label">
+            Did you mean?
+        </div>
+
+        <div id="correct" class="waiting">
+            Waiting for prediction...
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let port;
+
+
+/* ======================================
+   Edge Impulse 결과 → 문장
+====================================== */
+
+const sentences = {
+
+    apple: {
+        incorrect: "Apple want eat I",
+        correct: "I want to eat an apple."
+    },
+
+    sleep: {
+        incorrect: "Sleep bed go",
+        correct: "I am tired and want to go to sleep."
+    },
+
+    water: {
+        incorrect: "Water thirsty give",
+        correct: "I am thirsty, could I get some water?"
+    },
+
+    cold: {
+        incorrect: "Cold air turn",
+        correct: "I am feeling cold, please turn off the AC."
+    },
+
+    bathroom: {
+        incorrect: "Bathroom go now",
+        correct: "I need to use the bathroom right now."
+    }
+
+};
+
+
+/* ======================================
+   Arduino 연결
+====================================== */
+
+document
+    .getElementById("connectButton")
+    .addEventListener("click", connectArduino);
+
+
+async function connectArduino() {
+
+    try {
+
+        // Arduino COM Port 선택
+        port = await navigator.serial.requestPort();
+
+        // Arduino Serial.begin(115200)과 같아야 함
+        await port.open({
+            baudRate: 115200
+        });
+
+        document.getElementById("status").innerText =
+            "Arduino connected ✓";
+
+        document.getElementById("connectButton").innerText =
+            "Connected";
+
+        readSerial();
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+        document.getElementById("status").innerText =
+            "Connection failed";
+
+    }
+
+}
+
+
+/* ======================================
+   Arduino 데이터 읽기
+====================================== */
+
+async function readSerial() {
+
+    const decoder = new TextDecoderStream();
+
+    port.readable.pipeTo(decoder.writable);
+
+    const reader = decoder.readable.getReader();
+
+    let buffer = "";
+
+
+    try {
+
+        while (true) {
+
+            const { value, done } = await reader.read();
+
+            if (done) {
+                break;
+            }
+
+            buffer += value;
+
+
+            // Arduino Serial.println()의 줄바꿈 기준
+            const lines = buffer.split("\n");
+
+            buffer = lines.pop();
+
+
+            for (let line of lines) {
+
+                const result =
+                    line.trim().toLowerCase();
+
+                console.log(
+                    "Arduino prediction:",
+                    result
+                );
+
+                showPrediction(result);
+
+            }
+
+        }
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+/* ======================================
+   화면에 결과 표시
+====================================== */
+
+function showPrediction(result) {
+
+    if (!sentences[result]) {
+        return;
+    }
+
+    const data = sentences[result];
+
+
+    const incorrect =
+        document.getElementById("incorrect");
+
+    const correct =
+        document.getElementById("correct");
+
+
+    incorrect.innerText =
+        data.incorrect;
+
+    correct.innerText =
+        data.correct;
+
+
+    incorrect.classList.remove("waiting");
+
+    correct.classList.remove("waiting");
+
+}
+
+</script>
+
+</body>
+</html>
