@@ -12,41 +12,54 @@
 
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f7fb;
             min-height: 100vh;
-
             display: flex;
             justify-content: center;
             align-items: center;
+
+            font-family: Arial, sans-serif;
+            background: #f3f6fb;
+            color: #1f2937;
         }
 
         .container {
-            width: 600px;
+            width: 620px;
+            padding: 42px;
+
             background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border-radius: 24px;
+
+            box-shadow:
+                0 15px 40px rgba(0, 0, 0, 0.08);
+
             text-align: center;
         }
 
         h1 {
-            margin-bottom: 5px;
-            color: #222;
+            margin: 0;
+            font-size: 32px;
         }
 
         .subtitle {
-            color: #777;
+            margin-top: 8px;
             margin-bottom: 30px;
+
+            color: #6b7280;
+            font-size: 15px;
         }
 
         #connectButton {
+            padding: 13px 26px;
+
+            border: none;
+            border-radius: 10px;
+
             background: #2563eb;
             color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 10px;
+
             font-size: 16px;
+            font-weight: bold;
+
             cursor: pointer;
         }
 
@@ -54,51 +67,121 @@
             background: #1d4ed8;
         }
 
+        #connectButton.connected {
+            background: #16a34a;
+        }
+
         .status {
-            margin-top: 15px;
+            margin-top: 14px;
+
             font-size: 14px;
-            color: #777;
+            color: #6b7280;
         }
 
-        .speech-box {
+        .microphone {
+            width: 95px;
+            height: 95px;
+
+            margin: 35px auto 16px;
+
+            border-radius: 50%;
+
+            background: #eef2ff;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 42px;
+        }
+
+        .listening-text {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .result-box {
             margin-top: 35px;
+
+            padding: 30px;
+
             background: #f8fafc;
-            border-radius: 15px;
-            padding: 25px;
+
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+
+            min-height: 170px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        .label {
-            color: #777;
+        .result-label {
+            margin-bottom: 18px;
+
             font-size: 14px;
-            margin-bottom: 10px;
+            font-weight: bold;
+
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        #incorrect {
-            font-size: 22px;
-            color: #555;
-            margin-bottom: 25px;
+        #heardText {
+            margin-bottom: 12px;
+
+            font-size: 16px;
+            color: #9ca3af;
         }
 
-        #correct {
-            font-size: 26px;
+        #heardText.hidden {
+            display: none;
+        }
+
+        #correctSentence {
+            font-size: 27px;
+            line-height: 1.45;
+
             font-weight: bold;
             color: #2563eb;
         }
 
         .waiting {
-            color: #aaa !important;
+            color: #9ca3af !important;
+            font-weight: normal !important;
+            font-size: 21px !important;
         }
 
-        .indicator {
-            margin: 25px auto 10px;
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: #eef2ff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 32px;
+        .examples {
+            margin-top: 30px;
+            text-align: left;
+
+            padding-top: 25px;
+
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .examples-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+
+            color: #374151;
+        }
+
+        .example {
+            margin-bottom: 10px;
+
+            font-size: 13px;
+            line-height: 1.5;
+
+            color: #6b7280;
+        }
+
+        .arrow {
+            color: #2563eb;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -110,7 +193,7 @@
     <h1>FTD Speech Bridge</h1>
 
     <div class="subtitle">
-        AI-powered speech correction
+        AI-powered speech intention recognition
     </div>
 
     <button id="connectButton">
@@ -121,26 +204,68 @@
         Arduino not connected
     </div>
 
-    <div class="indicator">
+
+    <div class="microphone">
         🎤
     </div>
 
-    <div class="speech-box">
+    <div class="listening-text" id="listeningText">
+        Connect the device to start
+    </div>
 
-        <div class="label">
-            Detected Speech
-        </div>
 
-        <div id="incorrect" class="waiting">
-            Waiting for speech...
-        </div>
+    <div class="result-box">
 
-        <div class="label">
+        <div class="result-label">
             Did you mean?
         </div>
 
-        <div id="correct" class="waiting">
+        <div id="heardText" class="hidden"></div>
+
+        <div
+            id="correctSentence"
+            class="waiting"
+        >
             Waiting for prediction...
+        </div>
+
+    </div>
+
+
+    <div class="examples">
+
+        <div class="examples-title">
+            Supported Sentences
+        </div>
+
+        <div class="example">
+            Apple want eat I
+            <span class="arrow">→</span>
+            I want to eat an apple.
+        </div>
+
+        <div class="example">
+            Sleep bed go
+            <span class="arrow">→</span>
+            I am tired and want to go to sleep.
+        </div>
+
+        <div class="example">
+            Water thirsty give
+            <span class="arrow">→</span>
+            I am thirsty, could I get some water?
+        </div>
+
+        <div class="example">
+            Cold air turn
+            <span class="arrow">→</span>
+            I am feeling cold, please turn off the AC.
+        </div>
+
+        <div class="example">
+            Bathroom go now
+            <span class="arrow">→</span>
+            I need to use the bathroom right now.
         </div>
 
     </div>
@@ -153,9 +278,9 @@
 let port;
 
 
-/* ======================================
-   Edge Impulse 결과 → 문장
-====================================== */
+/* ================================
+   Edge Impulse 키워드 → 문장
+================================ */
 
 const sentences = {
 
@@ -187,9 +312,9 @@ const sentences = {
 };
 
 
-/* ======================================
+/* ================================
    Arduino 연결
-====================================== */
+================================ */
 
 document
     .getElementById("connectButton")
@@ -200,25 +325,46 @@ async function connectArduino() {
 
     try {
 
-        // Arduino COM Port 선택
+        if (!("serial" in navigator)) {
+
+            alert(
+                "Web Serial is not supported. Please use Chrome or Microsoft Edge."
+            );
+
+            return;
+        }
+
+
         port = await navigator.serial.requestPort();
 
-        // Arduino Serial.begin(115200)과 같아야 함
+
         await port.open({
             baudRate: 115200
         });
 
+
         document.getElementById("status").innerText =
             "Arduino connected ✓";
 
-        document.getElementById("connectButton").innerText =
-            "Connected";
+
+        const button =
+            document.getElementById("connectButton");
+
+        button.innerText =
+            "Arduino Connected";
+
+        button.classList.add("connected");
+
+
+        document.getElementById("listeningText").innerText =
+            "Listening for speech...";
+
 
         readSerial();
 
     }
 
-    catch(error) {
+    catch (error) {
 
         console.error(error);
 
@@ -230,17 +376,24 @@ async function connectArduino() {
 }
 
 
-/* ======================================
-   Arduino 데이터 읽기
-====================================== */
+/* ================================
+   Serial 데이터 읽기
+================================ */
 
 async function readSerial() {
 
-    const decoder = new TextDecoderStream();
+    const decoder =
+        new TextDecoderStream();
 
-    port.readable.pipeTo(decoder.writable);
 
-    const reader = decoder.readable.getReader();
+    port.readable.pipeTo(
+        decoder.writable
+    );
+
+
+    const reader =
+        decoder.readable.getReader();
+
 
     let buffer = "";
 
@@ -249,32 +402,46 @@ async function readSerial() {
 
         while (true) {
 
-            const { value, done } = await reader.read();
+            const {
+                value,
+                done
+            } = await reader.read();
+
 
             if (done) {
                 break;
             }
 
+
             buffer += value;
 
 
-            // Arduino Serial.println()의 줄바꿈 기준
-            const lines = buffer.split("\n");
+            const lines =
+                buffer.split("\n");
 
-            buffer = lines.pop();
+
+            buffer =
+                lines.pop();
 
 
             for (let line of lines) {
 
-                const result =
-                    line.trim().toLowerCase();
+                const raw =
+                    line.trim();
+
+
+                if (raw.length === 0) {
+                    continue;
+                }
+
 
                 console.log(
                     "Arduino prediction:",
-                    result
+                    raw
                 );
 
-                showPrediction(result);
+
+                showPrediction(raw);
 
             }
 
@@ -282,7 +449,7 @@ async function readSerial() {
 
     }
 
-    catch(error) {
+    catch (error) {
 
         console.error(error);
 
@@ -291,36 +458,67 @@ async function readSerial() {
 }
 
 
-/* ======================================
-   화면에 결과 표시
-====================================== */
+/* ================================
+   결과 표시
 
-function showPrediction(result) {
+   1) 키워드(apple 등)면 매핑 테이블로 문장 생성
+   2) 매핑에 없으면 받은 줄을 그대로 표시
+================================ */
 
-    if (!sentences[result]) {
-        return;
+function showPrediction(raw) {
+
+    const key =
+        raw.toLowerCase();
+
+
+    const heard =
+        document.getElementById("heardText");
+
+    const result =
+        document.getElementById("correctSentence");
+
+
+    if (sentences[key]) {
+
+        const data = sentences[key];
+
+        heard.innerText =
+            data.incorrect;
+
+        heard.classList.remove("hidden");
+
+        result.innerText =
+            data.correct;
+
     }
 
-    const data = sentences[result];
+    else {
+
+        heard.classList.add("hidden");
+
+        result.innerText =
+            raw;
+
+    }
 
 
-    const incorrect =
-        document.getElementById("incorrect");
-
-    const correct =
-        document.getElementById("correct");
+    result.classList.remove("waiting");
 
 
-    incorrect.innerText =
-        data.incorrect;
+    document.getElementById(
+        "listeningText"
+    ).innerText =
+        "Speech recognized ✓";
 
-    correct.innerText =
-        data.correct;
 
+    setTimeout(() => {
 
-    incorrect.classList.remove("waiting");
+        document.getElementById(
+            "listeningText"
+        ).innerText =
+            "Listening for speech...";
 
-    correct.classList.remove("waiting");
+    }, 2000);
 
 }
 
