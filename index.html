@@ -3,526 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FTD Speech Bridge</title>
-
+    <title>Voice Pulse</title>
     <style>
-        * {
-            box-sizing: border-box;
+        :root {
+            --ink: #292332;
+            --muted: #817786;
+            --line: rgba(255, 255, 255, .78);
+            --panel: rgba(255, 255, 255, .38);
         }
+
+        * { box-sizing: border-box; }
 
         body {
-            margin: 0;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-
-            font-family: Arial, sans-serif;
-            background: #f3f6fb;
-            color: #1f2937;
-        }
-
-        .container {
-            width: 620px;
-            padding: 42px;
-
-            background: white;
-            border-radius: 24px;
-
-            box-shadow:
-                0 15px 40px rgba(0, 0, 0, 0.08);
-
-            text-align: center;
-        }
-
-        h1 {
             margin: 0;
-            font-size: 32px;
+            display: grid;
+            place-items: center;
+            overflow-x: hidden;
+            color: var(--ink);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at 82% 9%, rgba(215, 193, 255, .54), transparent 30%),
+                radial-gradient(circle at 15% 78%, rgba(255, 192, 212, .55), transparent 36%),
+                #fcf5f7;
         }
 
-        .subtitle {
-            margin-top: 8px;
-            margin-bottom: 30px;
-
-            color: #6b7280;
-            font-size: 15px;
+        .app {
+            width: min(100%, 430px);
+            min-height: 100vh;
+            padding: max(28px, env(safe-area-inset-top)) 22px max(26px, env(safe-area-inset-bottom));
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(155deg, rgba(255,255,255,.48), rgba(255,226,239,.35));
         }
 
-        #connectButton {
-            padding: 13px 26px;
+        .topbar { display: flex; align-items: center; justify-content: space-between; }
 
-            border: none;
-            border-radius: 10px;
+        .icon-button, .brand, .action-button {
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, .36);
+            box-shadow: 0 7px 22px rgba(128, 84, 124, .07);
+        }
 
-            background: #2563eb;
-            color: white;
-
-            font-size: 16px;
-            font-weight: bold;
-
+        .icon-button {
+            width: 56px;
+            height: 56px;
+            padding: 0;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            color: var(--ink);
             cursor: pointer;
         }
 
-        #connectButton:hover {
-            background: #1d4ed8;
-        }
+        .icon-button svg, .action-button svg { width: 25px; height: 25px; stroke: currentColor; }
+        .icon-button:hover, .action-button:hover { background: rgba(255, 255, 255, .68); }
 
-        #connectButton.connected {
-            background: #16a34a;
-        }
-
-        .status {
-            margin-top: 14px;
-
-            font-size: 14px;
-            color: #6b7280;
-        }
-
-        .microphone {
-            width: 95px;
-            height: 95px;
-
-            margin: 35px auto 16px;
-
-            border-radius: 50%;
-
-            background: #eef2ff;
-
+        .brand {
+            min-height: 56px;
+            padding: 6px 17px 6px 7px;
             display: flex;
-            justify-content: center;
             align-items: center;
-
-            font-size: 42px;
+            gap: 10px;
+            border-radius: 30px;
+            font-size: 19px;
+            font-weight: 650;
+            letter-spacing: -.5px;
         }
 
-        .listening-text {
-            color: #6b7280;
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 26%, #fff 0 8%, transparent 18%), linear-gradient(145deg, #f95cbd, #8be4ed 55%, #7370d8);
+            box-shadow: inset -4px -5px 11px rgba(50, 24, 98, .22), 0 2px 7px rgba(75, 46, 112, .2);
+        }
+
+        .hero { text-align: center; padding-top: clamp(58px, 10vh, 96px); }
+        h1 { margin: 0; font-size: clamp(28px, 7vw, 34px); letter-spacing: -1.35px; }
+        .status { min-height: 22px; margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+
+        .orb-wrap { position: relative; width: 220px; height: 220px; margin: 36px auto 28px; display: grid; place-items: center; }
+        .orb-wrap::before, .orb-wrap::after { content: ""; position: absolute; border-radius: 50%; }
+        .orb-wrap::before { inset: 8px; background: rgba(255, 157, 222, .22); filter: blur(14px); }
+        .orb-wrap::after { inset: -7px; border: 1px solid rgba(113, 226, 255, .65); opacity: .6; }
+
+        .orb {
+            position: relative;
+            width: 190px;
+            height: 190px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,.9);
+            border-radius: 50%;
+            background:
+                radial-gradient(ellipse at 36% 20%, rgba(255,255,255,.94) 0 7%, transparent 20%),
+                radial-gradient(ellipse at 72% 75%, rgba(255,255,255,.87) 0 9%, transparent 21%),
+                radial-gradient(circle at 61% 66%, #a4eff0 0 17%, transparent 42%),
+                linear-gradient(155deg, #ef72bd 3%, #fd99dc 43%, #d4b7f3 64%, #60dbe2 100%);
+            box-shadow: inset 14px 10px 22px rgba(255,255,255,.47), inset -19px -17px 28px rgba(61, 46, 115, .3), 0 17px 27px rgba(125, 64, 123, .2);
+        }
+
+        .orb::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(125deg, transparent 41%, rgba(82, 35, 91, .43) 45% 48%, transparent 53%); }
+        .orb-wrap.is-listening .orb { animation: pulse 1.35s ease-in-out infinite; }
+        .orb-wrap.is-processing .orb { animation: process 1.05s linear infinite; }
+        @keyframes pulse { 50% { transform: scale(1.055); filter: saturate(1.15); } }
+        @keyframes process { to { transform: rotate(360deg); } }
+
+        .transcript {
+            min-height: 25px;
+            margin: 0 auto;
+            color: #7f7382;
             font-size: 16px;
+            font-weight: 500;
+            line-height: 1.45;
         }
 
-        .result-box {
-            margin-top: 35px;
+        .processing {
+            min-height: 22px;
+            margin: 8px 0 0;
+            color: #b06d9d;
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity .18s;
+        }
+        .processing.visible { opacity: 1; }
 
-            padding: 30px;
-
-            background: #f8fafc;
-
-            border: 1px solid #e5e7eb;
-            border-radius: 18px;
-
-            min-height: 170px;
-
+        .sentence-card {
+            min-height: 137px;
+            margin-top: 19px;
+            padding: 20px 22px;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: var(--panel);
+            box-shadow: 0 16px 30px rgba(137, 73, 120, .09);
         }
 
-        .result-label {
-            margin-bottom: 18px;
+        .eyebrow { margin: 0 0 9px; color: #9a7d91; font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+        .sentence { margin: 0; color: var(--ink); font-size: clamp(23px, 6vw, 28px); font-weight: 750; letter-spacing: -1px; line-height: 1.23; }
+        .sentence.waiting { color: #8e8491; font-size: 19px; font-weight: 500; letter-spacing: -.45px; }
 
-            font-size: 14px;
-            font-weight: bold;
+        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto; padding-top: 38px; }
+        .action-button { min-height: 76px; padding: 14px; display: flex; align-items: center; gap: 10px; border-radius: 23px; color: var(--ink); text-align: left; cursor: pointer; }
+        .action-button strong { display: block; font-size: 13px; line-height: 1.2; }
+        .action-button span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
 
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .connect { width: 100%; margin-top: 13px; padding: 14px 18px; border: 0; border-radius: 18px; background: #32283a; color: white; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .connect.connected { background: #5e4177; }
+        .connect:hover { filter: brightness(1.08); }
 
-        #heardText {
-            margin-bottom: 12px;
-
-            font-size: 16px;
-            color: #9ca3af;
-        }
-
-        #heardText.hidden {
-            display: none;
-        }
-
-        #correctSentence {
-            font-size: 27px;
-            line-height: 1.45;
-
-            font-weight: bold;
-            color: #2563eb;
-        }
-
-        .waiting {
-            color: #9ca3af !important;
-            font-weight: normal !important;
-            font-size: 21px !important;
-        }
-
-        .examples {
-            margin-top: 30px;
-            text-align: left;
-
-            padding-top: 25px;
-
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .examples-title {
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 15px;
-
-            color: #374151;
-        }
-
-        .example {
-            margin-bottom: 10px;
-
-            font-size: 13px;
-            line-height: 1.5;
-
-            color: #6b7280;
-        }
-
-        .arrow {
-            color: #2563eb;
-            font-weight: bold;
+        @media (min-width: 700px) {
+            body { padding: 24px; }
+            .app { min-height: 820px; border: 1px solid rgba(255,255,255,.75); border-radius: 38px; box-shadow: 0 22px 70px rgba(112, 61, 100, .16); }
         }
     </style>
 </head>
-
 <body>
+    <main class="app">
+        <nav class="topbar" aria-label="Application controls">
+            <button class="icon-button" type="button" aria-label="Go back">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Voice Pulse</div>
+            <button class="icon-button" type="button" aria-label="More options">
+                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+            </button>
+        </nav>
 
-<div class="container">
+        <section class="hero" aria-live="polite">
+            <h1>AI Voice Recognition</h1>
+            <p class="status" id="status">Connect your device to begin</p>
+            <div class="orb-wrap" id="orbWrap" aria-hidden="true"><div class="orb"></div></div>
+            <p class="transcript" id="heardText">Your recognized words will appear here</p>
+            <p class="processing" id="processingText">Understanding your intention…</p>
+            <section class="sentence-card" aria-label="Interpreted sentence">
+                <p class="eyebrow">I think you mean</p>
+                <p class="sentence waiting" id="correctSentence">Waiting for your voice…</p>
+            </section>
+        </section>
 
-    <h1>FTD Speech Bridge</h1>
-
-    <div class="subtitle">
-        AI-powered speech intention recognition
-    </div>
-
-    <button id="connectButton">
-        Connect Arduino
-    </button>
-
-    <div class="status" id="status">
-        Arduino not connected
-    </div>
-
-
-    <div class="microphone">
-        🎤
-    </div>
-
-    <div class="listening-text" id="listeningText">
-        Connect the device to start
-    </div>
-
-
-    <div class="result-box">
-
-        <div class="result-label">
-            Did you mean?
+        <div class="quick-actions">
+            <button class="action-button" type="button" aria-label="View phrase history">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 19.5V5.7A2.7 2.7 0 0 1 6.7 3h10.6A2.7 2.7 0 0 1 20 5.7v7.6a2.7 2.7 0 0 1-2.7 2.7H10l-4.5 3.5v-3.7A2.7 2.7 0 0 1 4 13.3"/><path d="M9 9h6M9 12h4"/></svg>
+                <span><strong>Phrase history</strong><span>Recent messages</span></span>
+            </button>
+            <button class="action-button" type="button" id="demoButton" aria-label="Play a demonstration">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 3v12"/><path d="M8.5 6.5a5 5 0 1 0 7 0M5 21h14"/></svg>
+                <span><strong>Try a demo</strong><span>Preview the flow</span></span>
+            </button>
         </div>
+        <button class="connect" id="connectButton" type="button">Connect Arduino</button>
+    </main>
 
-        <div id="heardText" class="hidden"></div>
+    <script>
+        let port;
+        let reader;
+        let resultTimer;
 
-        <div
-            id="correctSentence"
-            class="waiting"
-        >
-            Waiting for prediction...
-        </div>
+        const sentences = {
+            apple: { incorrect: "Apple want eat I", correct: "I want to eat an apple." },
+            sleep: { incorrect: "Sleep bed go.", correct: "I am tired and want to go to sleep." },
+            water: { incorrect: "Water thirsty give.", correct: "I am thirsty, could I get some water?" },
+            cold: { incorrect: "Cold air turn.", correct: "I am feeling cold, please turn off the AC." },
+            bathroom: { incorrect: "Bathroom go now.", correct: "I need to use the bathroom right now." }
+        };
 
-    </div>
+        const elements = {
+            button: document.getElementById("connectButton"),
+            status: document.getElementById("status"),
+            heard: document.getElementById("heardText"),
+            processing: document.getElementById("processingText"),
+            sentence: document.getElementById("correctSentence"),
+            orb: document.getElementById("orbWrap")
+        };
 
-
-    <div class="examples">
-
-        <div class="examples-title">
-            Supported Sentences
-        </div>
-
-        <div class="example">
-            Apple want eat I
-            <span class="arrow">→</span>
-            I want to eat an apple.
-        </div>
-
-        <div class="example">
-            Sleep bed go
-            <span class="arrow">→</span>
-            I am tired and want to go to sleep.
-        </div>
-
-        <div class="example">
-            Water thirsty give
-            <span class="arrow">→</span>
-            I am thirsty, could I get some water?
-        </div>
-
-        <div class="example">
-            Cold air turn
-            <span class="arrow">→</span>
-            I am feeling cold, please turn off the AC.
-        </div>
-
-        <div class="example">
-            Bathroom go now
-            <span class="arrow">→</span>
-            I need to use the bathroom right now.
-        </div>
-
-    </div>
-
-</div>
-
-
-<script>
-
-let port;
-
-
-/* ================================
-   Edge Impulse 키워드 → 문장
-================================ */
-
-const sentences = {
-
-    apple: {
-        incorrect: "Apple want eat I",
-        correct: "I want to eat an apple."
-    },
-
-    sleep: {
-        incorrect: "Sleep bed go",
-        correct: "I am tired and want to go to sleep."
-    },
-
-    water: {
-        incorrect: "Water thirsty give",
-        correct: "I am thirsty, could I get some water?"
-    },
-
-    cold: {
-        incorrect: "Cold air turn",
-        correct: "I am feeling cold, please turn off the AC."
-    },
-
-    bathroom: {
-        incorrect: "Bathroom go now",
-        correct: "I need to use the bathroom right now."
-    }
-
-};
-
-
-/* ================================
-   Arduino 연결
-================================ */
-
-document
-    .getElementById("connectButton")
-    .addEventListener("click", connectArduino);
-
-
-async function connectArduino() {
-
-    try {
-
-        if (!("serial" in navigator)) {
-
-            alert(
-                "Web Serial is not supported. Please use Chrome or Microsoft Edge."
-            );
-
-            return;
+        function setListening(isListening) {
+            elements.orb.classList.toggle("is-listening", isListening);
+            elements.orb.classList.remove("is-processing");
         }
 
+        function showPrediction(raw) {
+            const normalized = raw.trim().toLowerCase();
+            const data = sentences[normalized];
+            const heardText = data ? data.incorrect : raw.trim();
+            const sentence = data ? data.correct : raw.trim();
 
-        port = await navigator.serial.requestPort();
+            clearTimeout(resultTimer);
+            elements.heard.textContent = heardText;
+            elements.sentence.textContent = "Listening to your words…";
+            elements.sentence.classList.add("waiting");
+            elements.processing.classList.add("visible");
+            elements.orb.classList.remove("is-listening");
+            elements.orb.classList.add("is-processing");
 
+            resultTimer = setTimeout(() => {
+                elements.sentence.textContent = sentence;
+                elements.sentence.classList.remove("waiting");
+                elements.processing.classList.remove("visible");
+                setListening(true);
+            }, 950);
+        }
 
-        await port.open({
-            baudRate: 115200
-        });
-
-
-        document.getElementById("status").innerText =
-            "Arduino connected ✓";
-
-
-        const button =
-            document.getElementById("connectButton");
-
-        button.innerText =
-            "Arduino Connected";
-
-        button.classList.add("connected");
-
-
-        document.getElementById("listeningText").innerText =
-            "Listening for speech...";
-
-
-        readSerial();
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-        document.getElementById("status").innerText =
-            "Connection failed";
-
-    }
-
-}
-
-
-/* ================================
-   Serial 데이터 읽기
-================================ */
-
-async function readSerial() {
-
-    const decoder =
-        new TextDecoderStream();
-
-
-    port.readable.pipeTo(
-        decoder.writable
-    );
-
-
-    const reader =
-        decoder.readable.getReader();
-
-
-    let buffer = "";
-
-
-    try {
-
-        while (true) {
-
-            const {
-                value,
-                done
-            } = await reader.read();
-
-
-            if (done) {
-                break;
+        async function connectArduino() {
+            if (!("serial" in navigator)) {
+                elements.status.textContent = "Use Chrome or Microsoft Edge to connect your device";
+                return;
             }
 
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                elements.status.textContent = "Arduino connected · Listening for your voice";
+                elements.button.textContent = "Arduino Connected";
+                elements.button.classList.add("connected");
+                setListening(true);
+                await readSerial();
+            } catch (error) {
+                console.error(error);
+                elements.status.textContent = "Connection failed. Please try again.";
+                setListening(false);
+            }
+        }
 
-            buffer += value;
+        async function readSerial() {
+            const decoder = new TextDecoderStream();
+            const pipeClosed = port.readable.pipeTo(decoder.writable);
+            reader = decoder.readable.getReader();
+            let buffer = "";
 
-
-            const lines =
-                buffer.split("\n");
-
-
-            buffer =
-                lines.pop();
-
-
-            for (let line of lines) {
-
-                const raw =
-                    line.trim();
-
-
-                if (raw.length === 0) {
-                    continue;
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    buffer += value;
+                    const lines = buffer.split("\n");
+                    buffer = lines.pop();
+                    lines.forEach((line) => {
+                        const raw = line.trim();
+                        if (raw) showPrediction(raw);
+                    });
                 }
-
-
-                console.log(
-                    "Arduino prediction:",
-                    raw
-                );
-
-
-                showPrediction(raw);
-
+            } catch (error) {
+                console.error(error);
+                elements.status.textContent = "Device connection ended";
+                setListening(false);
+            } finally {
+                reader.releaseLock();
+                await pipeClosed.catch(() => {});
             }
-
         }
 
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-    }
-
-}
-
-
-/* ================================
-   결과 표시
-
-   1) 키워드(apple 등)면 매핑 테이블로 문장 생성
-   2) 매핑에 없으면 받은 줄을 그대로 표시
-================================ */
-
-function showPrediction(raw) {
-
-    const key =
-        raw.toLowerCase();
-
-
-    const heard =
-        document.getElementById("heardText");
-
-    const result =
-        document.getElementById("correctSentence");
-
-
-    if (sentences[key]) {
-
-        const data = sentences[key];
-
-        heard.innerText =
-            data.incorrect;
-
-        heard.classList.remove("hidden");
-
-        result.innerText =
-            data.correct;
-
-    }
-
-    else {
-
-        heard.classList.add("hidden");
-
-        result.innerText =
-            raw;
-
-    }
-
-
-    result.classList.remove("waiting");
-
-
-    document.getElementById(
-        "listeningText"
-    ).innerText =
-        "Speech recognized ✓";
-
-
-    setTimeout(() => {
-
-        document.getElementById(
-            "listeningText"
-        ).innerText =
-            "Listening for speech...";
-
-    }, 2000);
-
-}
-
-</script>
-
+        elements.button.addEventListener("click", connectArduino);
+        document.getElementById("demoButton").addEventListener("click", () => showPrediction("apple"));
+    </script>
 </body>
 </html>
