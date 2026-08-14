@@ -80,40 +80,83 @@
         }
 
         .hero { text-align: center; padding-top: clamp(58px, 10vh, 96px); }
-        h1 { margin: 0; font-size: clamp(28px, 7vw, 34px); letter-spacing: -1.35px; }
+        h1 {
+            margin: 0;
+            font-size: clamp(25px, 6.4vw, 30px);
+            font-weight: 600;
+            letter-spacing: -.75px;
+            line-height: 1.2;
+        }
         .status { min-height: 22px; margin: 10px 0 0; color: var(--muted); font-size: 13px; }
 
-        .orb-wrap { position: relative; width: 220px; height: 220px; margin: 36px auto 28px; display: grid; place-items: center; }
-        .orb-wrap::before, .orb-wrap::after { content: ""; position: absolute; border-radius: 50%; }
-        .orb-wrap::before { inset: 8px; background: rgba(255, 157, 222, .22); filter: blur(14px); }
-        .orb-wrap::after { inset: -7px; border: 1px solid rgba(113, 226, 255, .65); opacity: .6; }
+        .orb-wrap {
+            --voice-level: .07;
+            --voice-scale: 1.006;
+            --wave-scale: 1.03;
+            --wave-opacity: .14;
+            --orb-saturation: 1.02;
+            --orb-brightness: 1.01;
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 36px auto 28px;
+            display: grid;
+            place-items: center;
+        }
+        .wave {
+            position: absolute;
+            width: 190px;
+            height: 190px;
+            border: 1px solid rgba(135, 225, 250, .8);
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(var(--wave-scale));
+            transition: opacity .08s ease-out, transform .08s ease-out;
+        }
+        .wave-two { border-color: rgba(255, 173, 216, .75); }
+        .wave-three { border-color: rgba(188, 167, 255, .58); }
+        .orb-wrap.is-listening .wave { animation: ripple 1.7s cubic-bezier(.1, .64, .36, 1) infinite; }
+        .orb-wrap.is-listening .wave-two { animation-delay: .53s; }
+        .orb-wrap.is-listening .wave-three { animation-delay: 1.06s; }
+        @keyframes ripple {
+            0% { opacity: var(--wave-opacity); transform: scale(var(--wave-scale)); }
+            100% { opacity: 0; transform: scale(1.36); }
+        }
+
+        .processing-ring {
+            position: absolute;
+            inset: 5px;
+            border: 2px solid transparent;
+            border-top-color: rgba(103, 220, 239, .95);
+            border-right-color: rgba(247, 120, 197, .82);
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+        }
 
         .orb {
             position: relative;
             width: 190px;
             height: 190px;
             overflow: hidden;
-            border: 2px solid rgba(255,255,255,.9);
             border-radius: 50%;
-            background:
-                radial-gradient(ellipse at 36% 20%, rgba(255,255,255,.94) 0 7%, transparent 20%),
-                radial-gradient(ellipse at 72% 75%, rgba(255,255,255,.87) 0 9%, transparent 21%),
-                radial-gradient(circle at 61% 66%, #a4eff0 0 17%, transparent 42%),
-                linear-gradient(155deg, #ef72bd 3%, #fd99dc 43%, #d4b7f3 64%, #60dbe2 100%);
-            box-shadow: inset 14px 10px 22px rgba(255,255,255,.47), inset -19px -17px 28px rgba(61, 46, 115, .3), 0 17px 27px rgba(125, 64, 123, .2);
+            box-shadow: 0 17px 27px rgba(125, 64, 123, .2);
         }
 
-        .orb::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(125deg, transparent 41%, rgba(82, 35, 91, .43) 45% 48%, transparent 53%); }
-        .orb-wrap.is-listening .orb { animation: pulse 1.35s ease-in-out infinite; }
-        .orb-wrap.is-processing .orb { animation: process 1.05s linear infinite; }
-        @keyframes pulse { 50% { transform: scale(1.055); filter: saturate(1.15); } }
+        .orb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+        .orb-wrap.is-listening .orb {
+            transform: scale(var(--voice-scale));
+            filter: saturate(var(--orb-saturation)) brightness(var(--orb-brightness));
+            transition: transform .08s ease-out, filter .08s ease-out;
+        }
+        .orb-wrap.is-processing .processing-ring { opacity: 1; animation: process 1.05s linear infinite; }
         @keyframes process { to { transform: rotate(360deg); } }
 
         .transcript {
             min-height: 25px;
             margin: 0 auto;
             color: #7f7382;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 500;
             line-height: 1.45;
         }
@@ -145,12 +188,31 @@
         .sentence { margin: 0; color: var(--ink); font-size: clamp(23px, 6vw, 28px); font-weight: 750; letter-spacing: -1px; line-height: 1.23; }
         .sentence.waiting { color: #8e8491; font-size: 19px; font-weight: 500; letter-spacing: -.45px; }
 
-        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto; padding-top: 38px; }
-        .action-button { min-height: 76px; padding: 14px; display: flex; align-items: center; gap: 10px; border-radius: 23px; color: var(--ink); text-align: left; cursor: pointer; }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-auto-rows: 84px;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 0;
+        }
+        .action-button {
+            width: 100%;
+            height: 84px;
+            min-height: 0;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 23px;
+            color: var(--ink);
+            text-align: left;
+            cursor: pointer;
+        }
         .action-button strong { display: block; font-size: 13px; line-height: 1.2; }
         .action-button span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
 
-        .connect { width: 100%; margin-top: 13px; padding: 14px 18px; border: 0; border-radius: 18px; background: #32283a; color: white; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .connect { width: 100%; margin-top: 20px; padding: 14px 18px; border: 0; border-radius: 18px; background: #32283a; color: white; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
         .connect.connected { background: #5e4177; }
         .connect:hover { filter: brightness(1.08); }
 
@@ -166,7 +228,7 @@
             <button class="icon-button" type="button" aria-label="Go back">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
             </button>
-            <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Voice Pulse</div>
+            <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Speech Bridge</div>
             <button class="icon-button" type="button" aria-label="More options">
                 <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
             </button>
@@ -175,7 +237,13 @@
         <section class="hero" aria-live="polite">
             <h1>AI Voice Recognition</h1>
             <p class="status" id="status">Connect your device to begin</p>
-            <div class="orb-wrap" id="orbWrap" aria-hidden="true"><div class="orb"></div></div>
+            <div class="orb-wrap" id="orbWrap" aria-hidden="true">
+                <span class="wave wave-one"></span>
+                <span class="wave wave-two"></span>
+                <span class="wave wave-three"></span>
+                <span class="processing-ring"></span>
+                <div class="orb"><img src="assets/voice-orb.png" alt="Glossy pink and cyan glass orb"></div>
+            </div>
             <p class="transcript" id="heardText">Your recognized words will appear here</p>
             <p class="processing" id="processingText">Understanding your intention…</p>
             <section class="sentence-card" aria-label="Interpreted sentence">
@@ -201,6 +269,7 @@
         let port;
         let reader;
         let resultTimer;
+        let volumeTimer;
 
         const sentences = {
             apple: { incorrect: "Apple want eat I", correct: "I want to eat an apple." },
@@ -222,6 +291,20 @@
         function setListening(isListening) {
             elements.orb.classList.toggle("is-listening", isListening);
             elements.orb.classList.remove("is-processing");
+        }
+
+        // Arduino can send a separate line such as "volume:0.72" (or "volume:72").
+        // This changes only the visual listening feedback; it never replaces the recognized phrase.
+        function setVoiceLevel(value) {
+            const level = Math.max(0.04, Math.min(1, Number(value) || 0));
+            elements.orb.style.setProperty("--voice-level", level.toFixed(2));
+            elements.orb.style.setProperty("--voice-scale", (1 + level * 0.085).toFixed(3));
+            elements.orb.style.setProperty("--wave-scale", (1 + level * 0.12).toFixed(3));
+            elements.orb.style.setProperty("--wave-opacity", (.1 + level * .54).toFixed(2));
+            elements.orb.style.setProperty("--orb-saturation", (1 + level * .35).toFixed(2));
+            elements.orb.style.setProperty("--orb-brightness", (1 + level * .12).toFixed(2));
+            clearTimeout(volumeTimer);
+            volumeTimer = setTimeout(() => setVoiceLevel(0.07), 180);
         }
 
         function showPrediction(raw) {
@@ -282,7 +365,13 @@
                     buffer = lines.pop();
                     lines.forEach((line) => {
                         const raw = line.trim();
-                        if (raw) showPrediction(raw);
+                        const volumeMatch = raw.match(/^volume\s*:\s*([\d.]+)$/i);
+                        if (volumeMatch) {
+                            const received = Number(volumeMatch[1]);
+                            setVoiceLevel(received > 1 ? received / 100 : received);
+                        } else if (raw) {
+                            showPrediction(raw);
+                        }
                     });
                 }
             } catch (error) {
@@ -296,7 +385,14 @@
         }
 
         elements.button.addEventListener("click", connectArduino);
-        document.getElementById("demoButton").addEventListener("click", () => showPrediction("apple"));
+        document.getElementById("demoButton").addEventListener("click", () => {
+            setListening(true);
+            const demoLevels = [.12, .42, .76, .3, .61, .16];
+            demoLevels.forEach((level, index) => {
+                setTimeout(() => setVoiceLevel(level), index * 130);
+            });
+            setTimeout(() => showPrediction("apple"), demoLevels.length * 130 + 120);
+        });
     </script>
 </body>
 </html>
