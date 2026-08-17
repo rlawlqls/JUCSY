@@ -62,7 +62,7 @@
             box-shadow: inset -4px -5px 11px rgba(50, 24, 98, .22), 0 2px 7px rgba(75, 46, 112, .2);
         }
 
-        .hero { text-align: center; padding-top: clamp(58px, 10vh, 96px); }
+        .hero { text-align: center; padding-top: clamp(38px, 6vh, 76px); }
         h1 {
             margin: 0;
             font-size: clamp(25px, 6.4vw, 30px);
@@ -80,16 +80,16 @@
             --orb-saturation: 1.02;
             --orb-brightness: 1.01;
             position: relative;
-            width: 220px;
-            height: 220px;
-            margin: 36px auto 28px;
+            width: 200px;
+            height: 200px;
+            margin: 26px auto 20px;
             display: grid;
             place-items: center;
         }
         .wave {
             position: absolute;
-            width: 190px;
-            height: 190px;
+            width: 170px;
+            height: 170px;
             border: 1px solid rgba(135, 225, 250, .8);
             border-radius: 50%;
             opacity: 0;
@@ -119,8 +119,8 @@
 
         .orb {
             position: relative;
-            width: 190px;
-            height: 190px;
+            width: 170px;
+            height: 170px;
             overflow: hidden;
             border-radius: 50%;
             box-shadow: 0 17px 27px rgba(125, 64, 123, .2);
@@ -139,15 +139,15 @@
             min-height: 25px;
             margin: 0 auto;
             color: #7f7382;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 500;
             line-height: 1.45;
         }
-        .transcript.is-prompt { color: #9a8f9c; font-size: 16px; font-weight: 400; }
+        .transcript.is-prompt { color: #9a8f9c; font-size: 15px; font-weight: 400; }
 
         .processing {
             min-height: 22px;
-            margin: 8px 0 0;
+            margin: 6px 0 0;
             color: #b06d9d;
             font-size: 13px;
             opacity: 0;
@@ -156,9 +156,9 @@
         .processing.visible { opacity: 1; }
 
         .sentence-card {
-            min-height: 137px;
-            margin-top: 19px;
-            padding: 20px 22px;
+            min-height: 125px;
+            margin-top: 15px;
+            padding: 18px 20px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -168,11 +168,10 @@
             box-shadow: 0 16px 30px rgba(137, 73, 120, .09);
         }
 
-        .eyebrow { margin: 0 0 9px; color: #9a7d91; font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
-        .sentence { margin: 0; color: var(--ink); font-size: clamp(23px, 6vw, 28px); font-weight: 750; letter-spacing: -1px; line-height: 1.23; transition: opacity .25s ease; }
+        .eyebrow { margin: 0 0 6px; color: #9a7d91; font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+        .sentence { margin: 0; color: var(--ink); font-size: clamp(18px, 4.8vw, 23px); font-weight: 750; letter-spacing: -.5px; line-height: 1.3; transition: opacity .25s ease; }
         .sentence:empty { opacity: 0; }
 
-        /* The connect button is the only control left, so it sits at the bottom of the frame. */
         .connect { width: 100%; margin-top: auto; padding: 14px 18px; border: 0; border-radius: 18px; background: #32283a; color: white; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
         .connect.connected { background: #5e4177; cursor: default; }
         .connect:hover { filter: brightness(1.08); }
@@ -199,8 +198,10 @@
                 <span class="processing-ring"></span>
                 <div class="orb"><img src="assets/voice-orb.png" alt="Glossy pink and cyan glass orb"></div>
             </div>
+            
             <p class="transcript is-prompt" id="heardText">Connect your device to start speaking</p>
             <p class="processing" id="processingText">Processing your words…</p>
+
             <section class="sentence-card" aria-label="Interpreted sentence">
                 <p class="eyebrow">I think you mean</p>
                 <p class="sentence" id="correctSentence"></p>
@@ -217,25 +218,16 @@
         let hideTimer;
         let volumeTimer;
 
-        // How long the "Processing your words…" stage stays on screen
-        // before the corrected sentence appears.
         const PROCESSING_MS = 2600;
-        // How long the corrected sentence stays on screen before the card blanks.
         const RESULT_VISIBLE_MS = 4500;
-        // The Arduino often repeats the same word on consecutive lines. Ignore
-        // repeats inside this window so the result is not restarted mid-display.
-        const REPEAT_IGNORE_MS = 4500;
-        // Instruction shown in the recognized-words line while nothing is spoken.
         const IDLE_PROMPT = "Ready — start speaking now";
-        let lastRaw = "";
-        let lastRawAt = 0;
 
         const sentences = {
-            apple: { incorrect: "Apple want eat I", correct: "I want to eat an apple." },
-            sleep: { incorrect: "Sleep bed go.", correct: "I am tired and want to go to sleep." },
-            water: { incorrect: "Water thirsty give.", correct: "I am thirsty, could I get some water?" },
-            cold: { incorrect: "Cold air turn.", correct: "I am feeling cold, please turn off the AC." },
-            bathroom: { incorrect: "Bathroom go now.", correct: "I need to use the bathroom right now." }
+            apple: "I want to eat an apple.",
+            sleep: "I am tired and want to go to sleep.",
+            water: "I am thirsty, could I get some water?",
+            cold: "I am feeling cold, please turn off the AC.",
+            bathroom: "I need to use the bathroom right now."
         };
 
         const elements = {
@@ -247,7 +239,6 @@
             orb: document.getElementById("orbWrap")
         };
 
-        // Guidance text lives in the recognized-words line, never in the result card.
         function showPrompt(text) {
             elements.heard.textContent = text;
             elements.heard.classList.add("is-prompt");
@@ -267,8 +258,6 @@
             elements.orb.classList.remove("is-processing");
         }
 
-        // Called both on a failed connection and when the serial stream ends, so the
-        // button can be pressed again to reconnect.
         function resetToDisconnected(statusText, promptText) {
             elements.status.textContent = statusText;
             elements.button.textContent = "Connect Arduino";
@@ -279,8 +268,6 @@
             setListening(false);
         }
 
-        // Arduino can send a separate line such as "volume:0.72" (or "volume:72").
-        // This changes only the visual listening feedback; it never replaces the recognized phrase.
         function setVoiceLevel(value) {
             const level = Math.max(0.04, Math.min(1, Number(value) || 0));
             elements.orb.style.setProperty("--voice-level", level.toFixed(2));
@@ -293,27 +280,65 @@
             volumeTimer = setTimeout(() => setVoiceLevel(0.07), 180);
         }
 
-        function showPrediction(raw) {
-            const normalized = raw.trim().toLowerCase();
-            const now = Date.now();
-            if (normalized === lastRaw && now - lastRawAt < REPEAT_IGNORE_MS) return;
-            lastRaw = normalized;
-            lastRawAt = now;
+        function handleIncomingMessage(raw) {
+            const text = raw.trim();
+            if (!text) return;
 
-            const data = sentences[normalized];
-            const heardText = data ? data.incorrect : raw.trim();
-            const sentence = data ? data.correct : raw.trim();
+            // 1. 볼륨 데이터인 경우
+            const volumeMatch = text.match(/^volume\s*:\s*([\d.]+)$/i);
+            if (volumeMatch) {
+                const received = Number(volumeMatch[1]);
+                setVoiceLevel(received > 1 ? received / 100 : received);
+                return;
+            }
 
-            clearTimeout(resultTimer);
-            clearTimeout(hideTimer);
-            showHeard(heardText);
+            // 2. 대기, 녹음 상태, 안내 문구인 경우 -> 위쪽(heardText)에만 표시하고 종료
+            if (
+                text.includes("대기 중") || 
+                text.includes("손 감지됨") || 
+                text.includes("녹음") || 
+                text.includes("recording") || 
+                text.includes("finish") || 
+                text.includes("분석 결과") || 
+                text.includes("•") || 
+                text.includes("---") || 
+                text.includes("Could not recognize") ||
+                text.toLowerCase().includes("standing by") ||
+                text.toLowerCase().includes("please speak")
+            ) {
+                showHeard(text);
+                clearSentence();
+                setListening(true);
+                return;
+            }
+
+            // 3. 인식 결과에서 키워드 추출 및 매칭 문장 결정
+            const lowerText = text.toLowerCase();
+            let matchedSentence = "";
+
+            for (const key in sentences) {
+                if (lowerText.includes(key)) {
+                    matchedSentence = sentences[key];
+                    break;
+                }
+            }
+
+            if (!matchedSentence) {
+                matchedSentence = text;
+            }
+
+            // 4. 위쪽에는 원본 텍스트를 띄우고, 처리 단계를 거쳐 아래쪽 박스에 최종 문장 출력
+            showHeard("Recognized: " + text); 
             clearSentence();
             elements.processing.classList.add("visible");
             elements.orb.classList.remove("is-listening");
             elements.orb.classList.add("is-processing");
 
+            clearTimeout(resultTimer);
+            clearTimeout(hideTimer);
+
             resultTimer = setTimeout(() => {
-                elements.sentence.textContent = sentence;
+                elements.sentence.textContent = matchedSentence;
                 elements.processing.classList.remove("visible");
                 setListening(true);
 
@@ -324,8 +349,6 @@
             }, PROCESSING_MS);
         }
 
-        // Connecting is the only user action: opening the port immediately puts the
-        // page into the listening state and starts reading recognized words.
         async function connectArduino() {
             if (!("serial" in navigator)) {
                 elements.status.textContent = "Use Chrome or Microsoft Edge to connect your device";
@@ -343,7 +366,6 @@
                 setListening(true);
                 clearSentence();
                 showPrompt(IDLE_PROMPT);
-                lastRaw = "";
                 await readSerial();
             } catch (error) {
                 console.error(error);
@@ -365,14 +387,7 @@
                     const lines = buffer.split("\n");
                     buffer = lines.pop();
                     lines.forEach((line) => {
-                        const raw = line.trim();
-                        const volumeMatch = raw.match(/^volume\s*:\s*([\d.]+)$/i);
-                        if (volumeMatch) {
-                            const received = Number(volumeMatch[1]);
-                            setVoiceLevel(received > 1 ? received / 100 : received);
-                        } else if (raw) {
-                            showPrediction(raw);
-                        }
+                        handleIncomingMessage(line);
                     });
                 }
                 resetToDisconnected("Device connection ended", "Connection ended — reconnect your device to start speaking");
