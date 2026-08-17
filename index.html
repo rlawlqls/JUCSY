@@ -37,27 +37,16 @@
             background: linear-gradient(155deg, rgba(255,255,255,.48), rgba(255,226,239,.35));
         }
 
-        .topbar { display: flex; align-items: center; justify-content: space-between; }
+        .topbar { display: flex; align-items: center; justify-content: center; }
 
-        .icon-button, .brand, .action-button {
+        .brand, .action-button {
             border: 1px solid var(--line);
             background: rgba(255, 255, 255, .36);
             box-shadow: 0 7px 22px rgba(128, 84, 124, .07);
         }
 
-        .icon-button {
-            width: 56px;
-            height: 56px;
-            padding: 0;
-            display: grid;
-            place-items: center;
-            border-radius: 50%;
-            color: var(--ink);
-            cursor: pointer;
-        }
-
-        .icon-button svg, .action-button svg { width: 25px; height: 25px; stroke: currentColor; }
-        .icon-button:hover, .action-button:hover { background: rgba(255, 255, 255, .68); }
+        .action-button svg { width: 25px; height: 25px; stroke: currentColor; }
+        .action-button:hover { background: rgba(255, 255, 255, .68); }
 
         .brand {
             min-height: 56px;
@@ -226,13 +215,7 @@
 <body>
     <main class="app">
         <nav class="topbar" aria-label="Application controls">
-            <button class="icon-button" type="button" aria-label="Go back">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
             <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Speech Bridge</div>
-            <button class="icon-button" type="button" aria-label="More options">
-                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
-            </button>
         </nav>
 
         <section class="hero" aria-live="polite">
