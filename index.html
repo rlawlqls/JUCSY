@@ -160,6 +160,7 @@
             font-weight: 500;
             line-height: 1.45;
         }
+        .transcript.is-prompt { color: #9a8f9c; font-size: 16px; font-weight: 400; }
 
         .processing {
             min-height: 22px;
@@ -185,8 +186,8 @@
         }
 
         .eyebrow { margin: 0 0 9px; color: #9a7d91; font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
-        .sentence { margin: 0; color: var(--ink); font-size: clamp(23px, 6vw, 28px); font-weight: 750; letter-spacing: -1px; line-height: 1.23; }
-        .sentence.waiting { color: #8e8491; font-size: 19px; font-weight: 500; letter-spacing: -.45px; }
+        .sentence { margin: 0; color: var(--ink); font-size: clamp(23px, 6vw, 28px); font-weight: 750; letter-spacing: -1px; line-height: 1.23; transition: opacity .25s ease; }
+        .sentence:empty { opacity: 0; }
 
         .quick-actions {
             display: grid;
@@ -244,11 +245,11 @@
                 <span class="processing-ring"></span>
                 <div class="orb"><img src="assets/voice-orb.png" alt="Glossy pink and cyan glass orb"></div>
             </div>
-            <p class="transcript" id="heardText">Your recognized words will appear here</p>
-            <p class="processing" id="processingText">Understanding your intention…</p>
+            <p class="transcript is-prompt" id="heardText">Connect your device to start speaking</p>
+            <p class="processing" id="processingText">Processing your words…</p>
             <section class="sentence-card" aria-label="Interpreted sentence">
                 <p class="eyebrow">I think you mean</p>
-                <p class="sentence waiting" id="correctSentence">Waiting for your voice…</p>
+                <p class="sentence" id="correctSentence"></p>
             </section>
         </section>
 
@@ -269,14 +270,19 @@
         let port;
         let reader;
         let resultTimer;
+        let hideTimer;
         let volumeTimer;
 
-        // How long the "Understanding your intention…" stage stays on screen
+        // How long the "Processing your words…" stage stays on screen
         // before the corrected sentence appears.
         const PROCESSING_MS = 2600;
+        // How long the corrected sentence stays on screen before the card blanks.
+        const RESULT_VISIBLE_MS = 4500;
         // The Arduino often repeats the same word on consecutive lines. Ignore
         // repeats inside this window so the result is not restarted mid-display.
-        const REPEAT_IGNORE_MS = 4000;
+        const REPEAT_IGNORE_MS = 4500;
+        // Instruction shown in the recognized-words line while nothing is spoken.
+        const IDLE_PROMPT = "Ready — start speaking now";
         let lastRaw = "";
         let lastRawAt = 0;
 
@@ -296,6 +302,21 @@
             sentence: document.getElementById("correctSentence"),
             orb: document.getElementById("orbWrap")
         };
+
+        // Guidance text lives in the recognized-words line, never in the result card.
+        function showPrompt(text) {
+            elements.heard.textContent = text;
+            elements.heard.classList.add("is-prompt");
+        }
+
+        function showHeard(text) {
+            elements.heard.textContent = text;
+            elements.heard.classList.remove("is-prompt");
+        }
+
+        function clearSentence() {
+            elements.sentence.textContent = "";
+        }
 
         function setListening(isListening) {
             elements.orb.classList.toggle("is-listening", isListening);
@@ -328,24 +349,29 @@
             const sentence = data ? data.correct : raw.trim();
 
             clearTimeout(resultTimer);
-            elements.heard.textContent = heardText;
-            elements.sentence.textContent = "Listening to your words…";
-            elements.sentence.classList.add("waiting");
+            clearTimeout(hideTimer);
+            showHeard(heardText);
+            clearSentence();
             elements.processing.classList.add("visible");
             elements.orb.classList.remove("is-listening");
             elements.orb.classList.add("is-processing");
 
             resultTimer = setTimeout(() => {
                 elements.sentence.textContent = sentence;
-                elements.sentence.classList.remove("waiting");
                 elements.processing.classList.remove("visible");
                 setListening(true);
+
+                hideTimer = setTimeout(() => {
+                    clearSentence();
+                    showPrompt(IDLE_PROMPT);
+                }, RESULT_VISIBLE_MS);
             }, PROCESSING_MS);
         }
 
         async function connectArduino() {
             if (!("serial" in navigator)) {
                 elements.status.textContent = "Use Chrome or Microsoft Edge to connect your device";
+                showPrompt("Open this page in Chrome or Edge to start speaking");
                 return;
             }
 
@@ -356,10 +382,14 @@
                 elements.button.textContent = "Arduino Connected";
                 elements.button.classList.add("connected");
                 setListening(true);
+                clearSentence();
+                showPrompt(IDLE_PROMPT);
                 await readSerial();
             } catch (error) {
                 console.error(error);
                 elements.status.textContent = "Connection failed. Please try again.";
+                clearSentence();
+                showPrompt("Connection failed — reconnect your device to start speaking");
                 setListening(false);
             }
         }
@@ -391,6 +421,8 @@
             } catch (error) {
                 console.error(error);
                 elements.status.textContent = "Device connection ended";
+                clearSentence();
+                showPrompt("Connection ended — reconnect your device to start speaking");
                 setListening(false);
             } finally {
                 reader.releaseLock();
@@ -401,6 +433,10 @@
         elements.button.addEventListener("click", connectArduino);
         document.getElementById("demoButton").addEventListener("click", () => {
             setListening(true);
+            clearTimeout(resultTimer);
+            clearTimeout(hideTimer);
+            clearSentence();
+            showPrompt(IDLE_PROMPT);
             lastRaw = "";
             const demoLevels = [.12, .42, .76, .3, .61, .16];
             demoLevels.forEach((level, index) => {
