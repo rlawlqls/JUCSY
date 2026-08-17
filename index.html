@@ -271,6 +271,15 @@
         let resultTimer;
         let volumeTimer;
 
+        // How long the "Understanding your intention…" stage stays on screen
+        // before the corrected sentence appears.
+        const PROCESSING_MS = 2600;
+        // The Arduino often repeats the same word on consecutive lines. Ignore
+        // repeats inside this window so the result is not restarted mid-display.
+        const REPEAT_IGNORE_MS = 4000;
+        let lastRaw = "";
+        let lastRawAt = 0;
+
         const sentences = {
             apple: { incorrect: "Apple want eat I", correct: "I want to eat an apple." },
             sleep: { incorrect: "Sleep bed go.", correct: "I am tired and want to go to sleep." },
@@ -309,6 +318,11 @@
 
         function showPrediction(raw) {
             const normalized = raw.trim().toLowerCase();
+            const now = Date.now();
+            if (normalized === lastRaw && now - lastRawAt < REPEAT_IGNORE_MS) return;
+            lastRaw = normalized;
+            lastRawAt = now;
+
             const data = sentences[normalized];
             const heardText = data ? data.incorrect : raw.trim();
             const sentence = data ? data.correct : raw.trim();
@@ -326,7 +340,7 @@
                 elements.sentence.classList.remove("waiting");
                 elements.processing.classList.remove("visible");
                 setListening(true);
-            }, 950);
+            }, PROCESSING_MS);
         }
 
         async function connectArduino() {
@@ -387,6 +401,7 @@
         elements.button.addEventListener("click", connectArduino);
         document.getElementById("demoButton").addEventListener("click", () => {
             setListening(true);
+            lastRaw = "";
             const demoLevels = [.12, .42, .76, .3, .61, .16];
             demoLevels.forEach((level, index) => {
                 setTimeout(() => setVoiceLevel(level), index * 130);
