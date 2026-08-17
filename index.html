@@ -39,22 +39,16 @@
 
         .topbar { display: flex; align-items: center; justify-content: center; }
 
-        .brand, .action-button {
-            border: 1px solid var(--line);
-            background: rgba(255, 255, 255, .36);
-            box-shadow: 0 7px 22px rgba(128, 84, 124, .07);
-        }
-
-        .action-button svg { width: 25px; height: 25px; stroke: currentColor; }
-        .action-button:hover { background: rgba(255, 255, 255, .68); }
-
         .brand {
             min-height: 56px;
             padding: 6px 17px 6px 7px;
             display: flex;
             align-items: center;
             gap: 10px;
+            border: 1px solid var(--line);
             border-radius: 30px;
+            background: rgba(255, 255, 255, .36);
+            box-shadow: 0 7px 22px rgba(128, 84, 124, .07);
             font-size: 19px;
             font-weight: 650;
             letter-spacing: -.5px;
@@ -178,32 +172,9 @@
         .sentence { margin: 0; color: var(--ink); font-size: clamp(23px, 6vw, 28px); font-weight: 750; letter-spacing: -1px; line-height: 1.23; transition: opacity .25s ease; }
         .sentence:empty { opacity: 0; }
 
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            grid-auto-rows: 84px;
-            gap: 12px;
-            margin-top: 20px;
-            padding-top: 0;
-        }
-        .action-button {
-            width: 100%;
-            height: 84px;
-            min-height: 0;
-            padding: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-radius: 23px;
-            color: var(--ink);
-            text-align: left;
-            cursor: pointer;
-        }
-        .action-button strong { display: block; font-size: 13px; line-height: 1.2; }
-        .action-button span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
-
-        .connect { width: 100%; margin-top: 20px; padding: 14px 18px; border: 0; border-radius: 18px; background: #32283a; color: white; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
-        .connect.connected { background: #5e4177; }
+        /* The connect button is the only control left, so it sits at the bottom of the frame. */
+        .connect { width: 100%; margin-top: auto; padding: 14px 18px; border: 0; border-radius: 18px; background: #32283a; color: white; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .connect.connected { background: #5e4177; cursor: default; }
         .connect:hover { filter: brightness(1.08); }
 
         @media (min-width: 700px) {
@@ -236,16 +207,6 @@
             </section>
         </section>
 
-        <div class="quick-actions">
-            <button class="action-button" type="button" aria-label="View phrase history">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 19.5V5.7A2.7 2.7 0 0 1 6.7 3h10.6A2.7 2.7 0 0 1 20 5.7v7.6a2.7 2.7 0 0 1-2.7 2.7H10l-4.5 3.5v-3.7A2.7 2.7 0 0 1 4 13.3"/><path d="M9 9h6M9 12h4"/></svg>
-                <span><strong>Phrase history</strong><span>Recent messages</span></span>
-            </button>
-            <button class="action-button" type="button" id="demoButton" aria-label="Play a demonstration">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 3v12"/><path d="M8.5 6.5a5 5 0 1 0 7 0M5 21h14"/></svg>
-                <span><strong>Try a demo</strong><span>Preview the flow</span></span>
-            </button>
-        </div>
         <button class="connect" id="connectButton" type="button">Connect Arduino</button>
     </main>
 
@@ -306,6 +267,18 @@
             elements.orb.classList.remove("is-processing");
         }
 
+        // Called both on a failed connection and when the serial stream ends, so the
+        // button can be pressed again to reconnect.
+        function resetToDisconnected(statusText, promptText) {
+            elements.status.textContent = statusText;
+            elements.button.textContent = "Connect Arduino";
+            elements.button.classList.remove("connected");
+            elements.button.disabled = false;
+            clearSentence();
+            showPrompt(promptText);
+            setListening(false);
+        }
+
         // Arduino can send a separate line such as "volume:0.72" (or "volume:72").
         // This changes only the visual listening feedback; it never replaces the recognized phrase.
         function setVoiceLevel(value) {
@@ -351,6 +324,8 @@
             }, PROCESSING_MS);
         }
 
+        // Connecting is the only user action: opening the port immediately puts the
+        // page into the listening state and starts reading recognized words.
         async function connectArduino() {
             if (!("serial" in navigator)) {
                 elements.status.textContent = "Use Chrome or Microsoft Edge to connect your device";
@@ -358,22 +333,21 @@
                 return;
             }
 
+            elements.button.disabled = true;
             try {
                 port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
                 elements.status.textContent = "Arduino connected · Listening for your voice";
-                elements.button.textContent = "Arduino Connected";
+                elements.button.textContent = "Listening…";
                 elements.button.classList.add("connected");
                 setListening(true);
                 clearSentence();
                 showPrompt(IDLE_PROMPT);
+                lastRaw = "";
                 await readSerial();
             } catch (error) {
                 console.error(error);
-                elements.status.textContent = "Connection failed. Please try again.";
-                clearSentence();
-                showPrompt("Connection failed — reconnect your device to start speaking");
-                setListening(false);
+                resetToDisconnected("Connection failed. Please try again.", "Connection failed — reconnect your device to start speaking");
             }
         }
 
@@ -401,12 +375,10 @@
                         }
                     });
                 }
+                resetToDisconnected("Device connection ended", "Connection ended — reconnect your device to start speaking");
             } catch (error) {
                 console.error(error);
-                elements.status.textContent = "Device connection ended";
-                clearSentence();
-                showPrompt("Connection ended — reconnect your device to start speaking");
-                setListening(false);
+                resetToDisconnected("Device connection ended", "Connection ended — reconnect your device to start speaking");
             } finally {
                 reader.releaseLock();
                 await pipeClosed.catch(() => {});
@@ -414,19 +386,6 @@
         }
 
         elements.button.addEventListener("click", connectArduino);
-        document.getElementById("demoButton").addEventListener("click", () => {
-            setListening(true);
-            clearTimeout(resultTimer);
-            clearTimeout(hideTimer);
-            clearSentence();
-            showPrompt(IDLE_PROMPT);
-            lastRaw = "";
-            const demoLevels = [.12, .42, .76, .3, .61, .16];
-            demoLevels.forEach((level, index) => {
-                setTimeout(() => setVoiceLevel(level), index * 130);
-            });
-            setTimeout(() => showPrediction("apple"), demoLevels.length * 130 + 120);
-        });
     </script>
 </body>
 </html>
