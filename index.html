@@ -279,6 +279,7 @@
         const REPEAT_IGNORE_MS = 4000;
         let lastRaw = "";
         let lastRawAt = 0;
+        let pendingSentence = null;
 
         const sentences = {
             apple: { incorrect: "Apple want eat I", correct: "I want to eat an apple." },
@@ -317,25 +318,35 @@
         }
 
         function showPrediction(raw) {
-            const normalized = raw.trim().toLowerCase();
+            const text = raw.trim();
+            if (!text) return;
+
+            const normalized = text.toLowerCase();
+            const data = sentences[normalized];
+            const heardText = data ? data.incorrect : text;
+            const sentence = data ? data.correct : text;
+
+            // The top line always mirrors what the user just said.
+            elements.heard.textContent = heardText;
+
             const now = Date.now();
-            if (normalized === lastRaw && now - lastRawAt < REPEAT_IGNORE_MS) return;
+            const isRepeat = normalized === lastRaw && now - lastRawAt < REPEAT_IGNORE_MS;
             lastRaw = normalized;
             lastRawAt = now;
-
-            const data = sentences[normalized];
-            const heardText = data ? data.incorrect : raw.trim();
-            const sentence = data ? data.correct : raw.trim();
+            // A repeat of a sentence that is already shown (or already on its way)
+            // must not restart the timer, otherwise the card never settles.
+            if (isRepeat && (pendingSentence === sentence || elements.sentence.textContent === sentence)) return;
 
             clearTimeout(resultTimer);
-            elements.heard.textContent = heardText;
-            elements.sentence.textContent = "Listening to your words…";
-            elements.sentence.classList.add("waiting");
+            pendingSentence = sentence;
+            // Keep the previous corrected sentence on screen while thinking,
+            // so the card is never blank.
             elements.processing.classList.add("visible");
             elements.orb.classList.remove("is-listening");
             elements.orb.classList.add("is-processing");
 
             resultTimer = setTimeout(() => {
+                pendingSentence = null;
                 elements.sentence.textContent = sentence;
                 elements.sentence.classList.remove("waiting");
                 elements.processing.classList.remove("visible");
